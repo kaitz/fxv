@@ -1,0 +1,65 @@
+// For text detection
+
+int txtStart,txtLen,binLen;
+int txtMinLen=65536;
+int type,state,jstart,jend,of,spaces;
+enum {DEFAULT=1,TEXT};
+// function will report its state 
+// or if i=-1 then state results otherwise i is pos
+// c4 is last 4 bytes
+void reset(){
+    state=NONE,type=DEFAULT,jstart=jend=0;
+    txtStart=txtLen=of=binLen=spaces=0;
+}
+int detect(int c4,int i) {
+    int p,c;
+    //if state parameters requested
+    if (i==REQUEST){
+        if (state==NONE)  return 0xffffffff;
+        if (state==START) return jstart;
+        if (state==END)   {p=jend; reset(); return p;}
+        if (state==INFO)  return 1;
+    }
+    if (i==RESET) {
+        reset();
+        return 0xffffffff;
+    }
+    c=c4&0xff;
+    //detect header
+    if (txtStart==0 && ((c<128 && c>=32) || c==10 || c==13 || c==0x12 || c==9)) txtStart=1,of=i;
+    if (txtStart) {
+       if ((c<128 && c>=32) || c==10 || c==13 || c==0x12 || c==9) {
+            ++txtLen;
+            if (c==32) spaces++;
+            // When valid text and at least one space
+            if (txtLen>txtMinLen && type==DEFAULT && spaces!=0){
+                type=TEXT;
+                state=START;
+                jstart=of;
+                return state;
+            }
+            return NONE;
+       }else {
+           if (binLen<25) {
+               binLen++;
+               return NONE;
+           }
+       }
+       if (type==TEXT && state==START) {
+            state=INFO;
+            jend=i;
+            return state;
+       } else if (type==TEXT && state==INFO && i>=jend) {
+            state=END;
+            type=DEFAULT;
+           return state;
+       } else if (type==TEXT){
+            reset();
+       } else txtStart=txtLen=binLen=0;
+    }
+    return NONE;
+}
+
+int main() {
+    reset();
+}

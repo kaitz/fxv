@@ -1,0 +1,121 @@
+// For ppm 24 bit detection
+int pgm=0;
+int pgmcomment=0,pgmw=0,pgmh=0,pgm_ptr=0,pgmc=0,pgmn=0,pamatr=0,pamd=0;
+char pgm_buf[32]={};
+
+int info;
+int buf0,buf1,buf2;
+int type,state,jstart,jend;
+enum {DEFAULT=1,IMGFILE}; //internal enum
+enum {NONE=0,START,INFO,END,RESET=0xfffffffe,REQUEST=0xffffffff}; //external enum
+// function will report its state 
+// or if i=-1 then state results otherwise i is pos
+// c4 is last 4 bytes
+void reset(){
+    state=NONE,type=DEFAULT,jstart=jend=buf0=buf1=0;
+    info=0;pgm_buf[0]=0;pgm_ptr=0;
+    pgmcomment=0,pgmw=0,pgmh=0,pgm_ptr=0,pgmc=0,pgmn=0,pamatr=0,pamd=0;pgm=0;
+}
+
+int atoi() {
+    int result, i;
+    i=0;
+    result=0;
+
+    // Convert digits to integer value
+    while (pgm_buf[i]) {
+        if (pgm_buf[i] < '0' || pgm_buf[i] > '9') {
+            return result;
+        }
+        result = result * 10 + (pgm_buf[i] - '0');
+        i++;
+    }
+    return result;
+}
+int detect(int c4,int i) {
+    int p ,c,s,v;
+    //if state parameters requested
+    if (i==REQUEST){
+        if (state==NONE)  return 0xffffffff;
+        if (state==START) return jstart;
+        if (state==END)   {p=jend;reset();return p;}
+        if (state==INFO)  return info;
+    }
+    if (i==RESET) {
+        //reset();
+        return 0xffffffff;
+    }
+    buf2=(buf2<<8)|(buf1>>24);
+    buf1=(buf1<<8)|(buf0>>24);
+    buf0=c4;
+    c=c4&0xff;
+    //detect header
+    if ((buf0&0xfff0ff)==0x50300a) {
+        pgmn=(buf0&0xf00)>>8;
+        if ((pgmn>=4 && pgmn<=6) || pgmn==7) pgm=i,pgm_ptr=pgmw=pgmh=pgmc=pgmcomment=pamatr=pamd=0;
+    }
+    if (c>127) pgm=0;
+    if (pgm) {
+      if (i-pgm==1 && c==0x23) pgmcomment=1; //pgm comment
+      if (!pgmcomment && pgm_ptr) {
+        s=0;
+        if (pgmn==7) {
+           if ((buf1&0xffff)==0x5749 && buf0==0x44544820) pgm_ptr=0, pamatr=1; // WIDTH
+           if ((buf1&0xffffff)==0x484549 && buf0==0x47485420) pgm_ptr=0, pamatr=2; // HEIGHT
+           if ((buf1&0xffffff)==0x4d4158 && buf0==0x56414c20) pgm_ptr=0, pamatr=3; // MAXVAL
+           if ((buf1&0xffff)==0x4445 && buf0==0x50544820) pgm_ptr=0, pamatr=4; // DEPTH
+           if ((buf2&0xff)==0x54 && buf1==0x55504c54 && buf0==0x59504520) pgm_ptr=0, pamatr=5; // TUPLTYPE
+           if ((buf1&0xffffff)==0x454e44 && buf0==0x4844520a) pgm_ptr=0, pamatr=6; // ENDHDR
+           if (c==0x0a) {
+             if (pamatr==0) pgm=0;
+             else if (pamatr<5) s=pamatr;
+             if (pamatr!=6) pamatr=0;
+           }
+        }
+        else if ((c==0x20|| c==0x0a) && !pgmw) s=1;
+        else if (c==0x0a && !pgmh) s=2;
+        else if (c==0x0a && !pgmc && pgmn!=4) s=3;
+
+        if (s) {
+          if (pgm_ptr>=32) pgm_ptr=31;
+          pgm_buf[pgm_ptr++]=0;
+          v=atoi();
+          if (v<0 || v>20000) v=0;
+          if (s==1) pgmw=v; else if (s==2) pgmh=v; else if (s==3) pgmc=v; else if (s==4) pamd=v;
+          if (v==0 || (s==3 && v>255)) pgm=0; else pgm_ptr=0;
+        }
+      }
+      if (!pgmcomment) {
+        if ((c>='0' && c<='9')) pgm_buf[pgm_ptr++]=c;
+      }
+      if (pgm_ptr>=32) pgm=pgm_ptr=0;
+      if (i-pgm>255) pgm=pgm_ptr=0;
+      if (pgmcomment && c==0x0a) pgmcomment=0;
+      if (pgmw && pgmh && pgmc && (pgmn==6 || (pgmn==7 && pamd==3 && pamatr==6))) {
+      if (type==DEFAULT ){
+            info=pgmw*3;
+            type=IMGFILE;
+            state=START;
+            jstart=i-pgm+3;
+            return state;
+        }
+      }
+    }
+    
+    if (type==IMGFILE && state==START) {
+            state=INFO;
+            jend=info*pgmh+jstart;
+           return state;
+    }
+     if (type==IMGFILE && state==INFO && i==(jend-1)) {
+            state=END;
+            type=DEFAULT;
+            pgm=0;
+           return state;
+    }
+    return NONE;
+}
+
+int main() {
+    reset();
+}

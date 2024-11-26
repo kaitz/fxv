@@ -1,0 +1,113 @@
+// text transform - encode with external dictionary
+enum {BLOCK=64};
+int totalout,y;
+char s[BLOCK]={}; 
+char inpc[4]={},p2[1024]={};
+char string[64]={' '};
+dictionary "english.dict" string dict;
+
+void fputc(int wt){
+    p2[y]=wt;y++;
+    if (y==1024) {y=0;write(p2,1024);}
+    totalout++;
+}
+int gett(int s_size ){
+    int k,j,w,t;
+    k=w=t=0;
+    for(j=0;j<s_size;j++){ 
+        k=s[j];
+        if (k>='A' && k<='Z') w=1; // upper
+        if (w==1 && j==0) w=2; // first upper
+        if (w==0 && k>0) w=4; // lower
+        t=t|w;
+        w=0;
+    }
+    return t;
+}
+int encode(int info,int len) {
+    int s_size,d,w,wt,c,fpos,k,m,str_size;
+    s_size=d=w=wt=fpos=totalout=y=str_size=0;
+    while (fpos<len){
+        read(inpc, 1);
+        c=inpc[0];
+        fpos++;
+        if (c>='A' && c<='Z') w=1;
+        if (((c>='a' && c<='z') || w) && s_size<BLOCK) {
+            s[s_size++]=c;
+            if (w) c=c+('a'-'A');
+            string[str_size++]=c;
+            w=0;
+        }
+        else {
+            string[str_size]=0;
+            m=gett(s_size);
+            if (s_size&& (m==6 || m==3||m==2||m==4)) {
+                if (m==6)wt=64; else wt=7;
+                if (m==4)wt=0;
+                dict=1;
+                if (dict>0){
+                    if (wt>0)  fputc(wt);
+                    wt=0,w=0;s_size=0;
+                    d=dict;
+                    fputc(d&255);
+                    d=d>>8;
+                    if (d) {
+                        fputc(d&255);
+                    }
+                    d=d>>8;
+                    if (d) {
+                        fputc(d&255);
+                    }
+                }
+                else {
+                    dict=2;// substring search
+                    if (dict>0) {
+                        if (wt>0)  fputc(wt);
+                        //wt=0,w=0;
+                        d=dict&0xffffff; // get codeword
+                        fputc(d&255);
+                        d=d>>8;
+                        if (d) {
+                            fputc(d&255);
+                        }
+                        d=d>>8;
+                        if (d) {
+                            fputc(d&255);
+                        }
+                        d=dict>>24;
+                        if (wt==7)fputc(7);
+                        else fputc(8);
+                        for(k=d;k<s_size;k++)
+                        fputc(s[k]);
+                        s_size=0;
+                    }
+                }
+            }
+            if (s_size>0) {
+                if (m==6) {
+                    fputc(64);
+                    s[0]=s[0]+32;
+                }
+                if (m==12||m==2) {
+                    fputc(7);
+                    for (k=0; k<s_size; k++) s[k]=s[k]+32;
+                }
+                for(k=0; k<s_size; k++)
+                    fputc(s[k]);
+            }
+            wt=w=s_size=str_size=0;
+            // 64 - first char is uppercase in word
+            // 7 - upper word
+            // 12 - escape 2
+            if (c>127 || c==64 || c==7 || c==8 || c==12) fputc(12);
+            fputc(c);
+        }
+    }
+    if (s_size>0) {
+        for(k=0;k<s_size;k++)
+        fputc(s[k]);
+    }
+    if (y>0) {write(p2,y);}
+}
+int main() {
+}

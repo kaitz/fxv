@@ -1,0 +1,118 @@
+// describe usable models
+stream 0
+model config\general.cfg
+stream 1
+model config\jpeg.cfg
+stream 2
+model config\general.cfg
+stream 3
+model config\img1bit.cfg
+stream 4
+model config\img8bit.cfg
+stream 5
+model config\img24bit.cfg
+stream 6
+model config\img4bit.cfg
+stream 7
+model config\text.cfg
+stream 8
+model config\exe.x32.cfg
+// set types
+// -1 (negative) means detect type is recursive
+// 0  its unknown data type
+// +1 its known data type
+//type -2				// recursive type -2
+//detect recur2.det	// detect data with recur2.det
+//decode recur2.dec	// decode detected data with recur2.dec
+//encode recur2.enc	// encode detected data with recur2.enc
+//compress -1			// no compression model
+//type -1
+//detect recur1.det
+//decode recur1.dec
+//encode recur1.enc
+//compress -1
+type 0
+detect -1
+decode -1
+encode -1
+compress 0
+type 1				// data type 1
+detect config\jpeg.det		// detect data with jpeg.det
+decode -1			// no decode
+encode -1			// no encode
+compress 1			// compress with model in stream 1
+type 3
+detect config\exe.det
+decode config\exe.dec
+encode config\exe.enc
+compress 8
+type 4
+detect config\img8bit.det
+decode -1
+encode -1
+compress 4
+type 5
+detect config\img1bit.det
+decode -1
+encode -1
+compress 3
+type 6
+detect config\img24bit.det
+decode config\img24bit.dec
+encode config\img24bit.enc
+compress 5
+type -1
+detect config\b64.det
+decode config\b64.dec
+encode config\b64.enc
+compress 0
+type 7
+detect config\text.det
+decode config\text.dec
+encode config\text.enc
+compress 7
+type 8
+detect config\dec.det
+decode config\dec.dec
+encode config\dec.enc
+compress 0
+type 9
+detect config\gif.det
+decode -1
+encode -1
+compress 0
+type 10
+detect config\arm.det
+decode config\arm.dec
+encode config\arm.enc
+compress 0
+type 11
+detect config\img4bit.det
+decode -1
+encode -1
+compress 6
+type 12
+detect config\nes.det 
+decode -1
+encode -1
+compress 0
+type 13
+detect config\imgpgm.det
+decode -1
+encode -1
+compress 4
+type 14
+detect config\imgppm.det
+decode -1
+encode -1
+compress 5
+type 15
+detect config\imgpbm.det
+decode -1
+encode -1
+compress 3
+type 16
+detect config\textutf.det
+decode config\text.dec
+encode config\text.enc
+compress 7

@@ -1,0 +1,78 @@
+// text transform - decode with external dictionary
+int f,y;
+char p1[4]={},p2[1024]={};
+char t[64]={' '};
+int j;
+dictionary "english.dict" t dict;
+char schar(char a) {
+    char c;
+    c=a;
+    if (c>='{' && c<127) c=c+('P'-'{');
+    else if (c>='P' && c<'T') c=c-('P'-'{');
+    else if ( (c>=':' && c<='?') || (c>='J' && c<='O') ) c=c^0x70;
+    if (c=='X' || c=='`') c=c^('X'^'`');
+    return c;
+}
+void putc(int wt){
+    p2[y]=wt;y++;
+    if (y==1024) {y=0;write(p2,1024);}
+    f++;
+}
+int get(){
+    read(p1, 1);
+    j++;
+    return schar(p1[0]);
+}
+int decode(int info,int len) {
+    int c,z,v,i,idx;
+    f=y=j=v=idx=0;
+    c=get();
+    while (j<len) {
+        if(c==12 || c==8){
+            c=get();
+            putc(c);
+            c=get();
+            v=0;
+        } else if(c>127) {
+            idx=c; //1
+            c=get();
+            if (c>127){
+                idx=idx+c*256; //2
+                c=get();
+                if (c>127){
+                    idx=idx+c*0x10000; //3
+                    c=get();
+                }
+            }
+            dict=idx;
+            idx=0;
+            z=dict; //string lenght
+            if(v==64) v=0,t[0]=t[0]-32;
+            if(v==7){
+                for(i=0;i<z;i++) t[i]=t[i]-32;
+            }
+            for(i=0;i<z;i++) putc(t[i]);
+            v=0;
+        } else if (c==64 || c==7) v=c,c=get();
+        else if (v==64) {
+            putc(c-32);
+            v=0;
+            c=get();
+        } else if (v==7 && (c>='a' && c<='z')) {
+            putc(c-32);
+            c=get();
+        }
+        else {
+          putc(c),v=0;
+          if (j<=len) {
+              c=get();
+          }
+        }
+        if (j>=len) putc(c);
+    }
+    if (y>0) {write(p2,y);}
+    return f;
+}
+int main() {
+
+}

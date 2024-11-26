@@ -1,0 +1,99 @@
+// For utf8 detection
+
+// UTF8 part: http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+enum {UTF8_ACCEPT,UTF8_REJECT};
+int utf8d[512] = {
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 20..3f
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 40..5f
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 60..7f
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9, // 80..9f
+    7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7, // a0..bf
+    8,8,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, // c0..df
+    0xa,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x4,0x3,0x3, // e0..ef
+    0xb,0x6,0x6,0x6,0x5,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8, // f0..ff
+    0x0,0x1,0x2,0x3,0x5,0x8,0x7,0x1,0x1,0x1,0x4,0x6,0x1,0x1,0x1,0x1, // s0..s0
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,1, // s1..s2
+    1,2,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1, // s3..s4
+    1,2,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,3,1,1,1,1,1,1, // s5..s6
+    1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // s7..s8
+};
+
+int txtStart,txtLen,binLen;
+int txtMinLen=0xffff;
+int type,state,jstart,jend,of;
+int stateutf, codep,isvalidutf,spaces;
+enum {DEFAULT=1,TEXT};
+// function will report its state 
+// or if i=-1 then state results otherwise i is pos
+// c4 is last 4 bytes
+void reset(){
+    state=NONE,type=DEFAULT,jstart=jend=0;
+    txtStart=txtLen=of=binLen=0;stateutf=codep=spaces=0;
+}
+int decode(int byte) {
+    int typeu;
+    typeu = utf8d[byte];
+
+    if (stateutf != UTF8_ACCEPT) 
+    codep =   ( (byte & 0x3f) | (codep << 6)); 
+    else 
+    codep =   ((0xff >> typeu) & byte);
+
+    stateutf = utf8d[256 + stateutf*16 + typeu];
+    //printf("%d",stateutf);
+    return stateutf;
+}
+int detect(int c4,int i) {
+    int p,c;
+    //if state parameters requested
+    if (i==REQUEST){
+        if (state==NONE)  return 0xffffffff;
+        if (state==START) return jstart;
+        if (state==END)   {p=jend; reset(); return p;}
+        if (state==INFO)  return 1;
+    }
+    if (i==RESET) {
+        reset();
+        return 0xffffffff;
+    }
+    c=c4&0xff;
+    //detect header
+    isvalidutf=decode(c)!=1?1:0;
+    if (txtStart==0 && ((c<128 && c>=32) || c==10 || c==13 || c==0x12 || c==9 )) txtStart=1,of=i;
+    if (txtStart) {
+        if ((c<128 && c>=32) || c==10 || c==13 || c==0x12 || c==9 || isvalidutf) {
+            ++txtLen;
+            if (c==32) spaces++;
+            // When valid text and at least one space
+            if (txtLen>txtMinLen && type==DEFAULT && spaces!=0){
+                type=TEXT;
+                state=START;
+                jstart=of;
+                return state;
+            }
+            return NONE;
+        }else {
+            if (binLen<25) {
+                binLen++;
+                return NONE;
+            }
+        }
+        if (type==TEXT && state==START) {
+            state=INFO;
+            jend=i;
+            return state;
+        } else if (type==TEXT && state==INFO && i>=jend) {
+            state=END;
+            type=DEFAULT;
+            return state;
+        } else if (type==TEXT){
+            reset();
+        } else txtStart=txtLen=binLen=0;
+    }
+    return NONE;
+}
+
+int main() {
+    reset();
+}

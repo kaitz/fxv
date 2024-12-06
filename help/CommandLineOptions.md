@@ -8,12 +8,13 @@ Usage: fxv [-options] [output] input
   -h                  extended help
   -2                  tune on file, output file is not created
   -t<n>               n is number of threds, default=1
-  -p<component>       select tunable component:
+  -p<component><idx>  select tunable component:
                       a - SMC    b - APM1    c - DS     d - AVG
                       e - SCM    f - RCM     g - CM     h - MX
                       i - ST     j - DHS     k - SM     l - SK
                       m - APM2   n - ERR     o - UAS    p - LMX
                       q - STA    r - BYT
+                      idx - select component index
   -o<n>               n specifies percentage of tune, default=100
   -r<n>               number of tune runs, default=25
   -m<n>               minimum tune improvment in bytes, default=2
@@ -31,8 +32,12 @@ Usage: fxv [-options] [output] input
   -d dir1/input dir2  extract to dir2
   -l input            list archive
 ```
+### option -p
+For example, selecting the BYT indices of the component: -pr0011
 
+Tune only BYT component 2 (third value is 1) and 3 (fourth value is 1). BYT 0 (first value is 0) and 1 (second value is 0) are disabled.
 
+### logging
 Program creates a pxv.log file in the same directory. After compression finishes, the final result is written at the end of the file.
 Example line from log:
 ```

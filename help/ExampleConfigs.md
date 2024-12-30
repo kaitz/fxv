@@ -6,6 +6,8 @@
 
 [fxcm1](#fxcm1pxv)
 
+[xlz](#xlz)
+
 [config](#configpxv)
 
 # Test computer parameters
@@ -55,6 +57,21 @@ Usage example: __fxv.exe -1 -j -w -fxcm1.pxv file__
 | Mem|1628 MB||
 
 Model not included. Uses external dictionary english.dict
+
+## xlz
+zpaq [m0.cfg](https://encode.su/threads/1435-Byte-oriented-LZ77-compressor?p=27713&viewfull=1#post27713) model.
+
+The model assumes input processed by lzpre20, see https://www.mattmahoney.net/dc/lz1.zip
+
+Input: enwik8.lzpre 37144854
+
+|  |Opt |Compressed|Time||
+| --- | --- |--- |--- |--- |
+|[zpaqd.exe](https://www.mattmahoney.net/dc/zpaqutil.html)| c lz1.cfg |  30746006  |   8.72 sec |  0 icm 12|
+|fxv.exe  | -1 -t1 -j -cdslz.pxv |  30411563  |  20.04 sec ||
+|fxv.exe  | -1 -t1 -j -ccmlz.pxv |  30393126  |  27.26 sec ||
+|fxv.exe  | -1 -t1 -j -csmclz.pxv|  29947596  |  18.22 sec ||
+|zpaqd.exe| c lz1.cfg            |  29928909  |   8.08 sec |  0 cm 20 48|
 
 ## config.pxv
 Below is list of supported data types by config.pxv

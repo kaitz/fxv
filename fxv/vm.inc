@@ -259,6 +259,7 @@ void initcomponent(VM* v, int component, int componentIndex, int f, int d, int i
             }
             case vmCM: {
                 v->cm++;
+                if (indexOfInputs>255) {kprintf("VM vmi error:cm(%d) bad mixer index %d.",v->cm,indexOfInputs);quit();}
                 if (indexOfInputs>=0) v->x.mxInputs[(indexOfInputs)].ncount+=6 *(d&255); // 6* num of contexts
                 v->posParamCount=v->posParamCount+6;
                 break;  

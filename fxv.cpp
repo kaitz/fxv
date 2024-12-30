@@ -3707,7 +3707,7 @@ printf("\n");
             "  -t<n>               n is number of threds, default=1\n"
 #endif            
 #ifdef FXTUNE
-            "  -p<component>       select tunable component:\n"
+            "  -p<component><idx>  select tunable component:\n"
             "                      a - SMC    b - APM1    c - DS     d - AVG\n"
             "                      e - SCM    f - RCM     g - CM     h - MX\n"
             "                      i - ST     j - DHS     k - SM     l - SK\n"

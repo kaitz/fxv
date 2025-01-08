@@ -7,7 +7,7 @@ Usage: fxv [-options] [output] input
   -1                  compress file
   -h                  extended help
   -2                  tune on file, output file is not created
-  -t<n>               n is number of threds, default=1
+  -t<n>               n is number of threads, default=1
   -p<component><idx>  select tunable component:
                       a - SMC    b - APM1    c - DS     d - AVG
                       e - SCM    f - RCM     g - CM     h - MX

@@ -13,6 +13,9 @@ Language used by the compressor is a subset of C language.
 * [table](#table)
 * [dictionary](#dictionary)
 * [record](#record)
+* word*
+* stem*
+* sentence*
 
 Types with * are not yet implemented.
 
@@ -29,7 +32,7 @@ Types with * are not yet implemented.
 * '//' - comment
 
 ### Math
-* '+', '-', '/', '*', '%','~'
+* '+', '-', '/', '*', '%','~','!'
 * '<<' - unsigned
 * '>>' - unsigned
 * '|' - unsigned
@@ -38,7 +41,7 @@ Types with * are not yet implemented.
 
 ### Compare, assign
 * '>', '<', '<=', '>=', '!=', '=='
-* '=','!'
+* '='
 
 ## Functions
 * printf
@@ -48,7 +51,8 @@ Types with * are not yet implemented.
 * vmi
 * vmx
 
-## Required function prototypes depending on what type of config file is used:
+## Function prototypes
+The usage of function prototypes depends on the configuration file.
 * block
 * update
 * bitupdate
@@ -57,6 +61,12 @@ Types with * are not yet implemented.
 * detect
 * decode
 * encode
+
+If there is encoding or decoding, we use prototypes encode, decode, main.
+
+If there is detect, we use prototypes detect, main.
+
+If there is compression or decompression, we use block, update, main or block, byteupdate, bitupdate, main.
 
 
 ## Examples
